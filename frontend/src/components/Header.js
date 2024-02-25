@@ -4,11 +4,12 @@ import AuthContext from '../context/AuthContext';
 import { AppBar, Toolbar, Typography, Button, Box ,TextField} from '@mui/material';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
-import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';import { styled } from '@mui/system';
+import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
+import { styled } from '@mui/system';
 
 function SidebarContent() {
   return (
-    <div className="bg-slate-900 text-white w-64 h-screen fixed top-0 left-0 ">
+    <div className="bg-slate-900 text-white w-64 h-screen fixed top-0 left-0 z-8">
       <ul className='mt-12'>
         <li className='p-4'>Profile</li>
         <li className='p-4'>Events</li>
@@ -51,10 +52,10 @@ const Header = () => {
   };
 
   return (
-    <AppBar position="static" style={{backgroundColor:'black'}}>
+    <AppBar position="fixed" style={{backgroundColor:'black'}}>
       <Toolbar>
       {/* <MenuOutlinedIcon className='mr-4 cursor-pointer'/> */}
-      <Sidebar/>
+      <Sidebar className="z-100"/>
         {/* <Button color="inherit" component={RouterLink} to="/memes">
           Home
         </Button> */}
@@ -65,13 +66,13 @@ const Header = () => {
         {user && <Typography variant="h6">Hello {user.username} !</Typography>}
         <Box sx={{ flexGrow: 0.58 }} />
         <SearchOutlinedIcon fontSize='medium'/>
-        <Box className="search px-4 py-2">
+        <Box className="search px-2 py-1">
         <input
           type="text"
           placeholder="Search here"
           onChange={handleChange}
           value={searchInput} 
-          className='p-2 rounded-full text-black-100 bg-slate-600'
+          className='px-4 py-2 rounded-full text-black-100 bg-slate-600'
           />
       </Box>
         {user ? (
