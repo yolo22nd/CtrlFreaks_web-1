@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import AuthContext from '../context/AuthContext';
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -16,11 +16,11 @@ function Committee() {
   const [currentEvent, setCurrentEvent] = useState({});
   const [name, setName] = useState("");
   const [type, setType] = useState("");
-  const [venue, setVenue] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [desc, setDesc] = useState("");
   const [img, setImg] = useState("");
+  const navigate = useNavigate();
 
   const { user } = useContext(AuthContext);
 
@@ -53,11 +53,11 @@ function Committee() {
   const createEvent = async () => {
     try {
       setLoading(true);
-      console.log(name, type, date, time, desc, img, "...", user.name);
-      let res = await axios.post('http://127.0.0.1:8000/events/',
-      { name: name, type: type, date: date, time: time, desc: desc, image: img, committee: user.name, venue: "djs" }, 
-      { headers: { 'Content-Type': 'application/json'}})
-      console.log(res);
+      navigate('/venue', { state: {name: name, type: type, date: date, time: time, desc: desc, image: img, committee: user.name } } );
+      // let res = await axios.post('http://127.0.0.1:8000/events/',
+      // { name: name, type: type, date: date, time: time, desc: desc, image: img, committee: user.name, venue: "djs" }, 
+      // { headers: { 'Content-Type': 'application/json'}})
+      // console.log(res);
       setLoading(false);
       setRender(false);
       setRender(true);
@@ -287,7 +287,7 @@ function Committee() {
         <div className="max-w-[1300px] m-auto pt-10 flex flex-wrap justify-around">
           {render &&
             committeeEventData.map((e) => {
-              if(e.is_pending === true){
+              if(e.is_approved === false && e.is_rejected === false){
               return (
                 <div
                   key={e.id}
@@ -303,7 +303,7 @@ function Committee() {
                   <div class="px-6 pt-4 pb-2">
                     <div className="flex">
                       <span class="rounded-full px-3 py-1 text-sm font-semibold text-gray-200 mr-2 mb-2 flex items-center">
-                        <LocationOnIcon /> {e.venue}
+                        <LocationOnIcon />Room {e.venue}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -340,7 +340,7 @@ function Committee() {
         <div className="max-w-[1300px] m-auto pt-10 flex flex-wrap justify-around">
           {render &&
             committeeEventData.map((e) => {
-              if(e.is_approved === true){
+              if(e.is_approved === true && e.is_rejected === false){
               return (
                 <div
                   key={e.id}
@@ -356,7 +356,7 @@ function Committee() {
                   <div class="px-6 pt-4 pb-2">
                     <div className="flex">
                       <span class="rounded-full px-3 py-1 text-sm font-semibold text-gray-200 mr-2 mb-2 flex items-center">
-                        <LocationOnIcon /> {e.venue}
+                        <LocationOnIcon /> Room {e.venue}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -394,7 +394,7 @@ function Committee() {
           {render &&
             committeeEventData.map((e) => {
               console.log(e.name)
-              if(!e.is_approved){
+              if(e.is_approved === false && e.is_rejected === true){
                 console.log(e.name)
               return (
                 <div
@@ -411,7 +411,7 @@ function Committee() {
                   <div class="px-6 pt-4 pb-2">
                     <div className="flex">
                       <span class="rounded-full px-3 py-1 text-sm font-semibold text-gray-200 mr-2 mb-2 flex items-center">
-                        <LocationOnIcon /> {e.venue}
+                        <LocationOnIcon /> Room {e.venue}
                       </span>
                     </div>
                     <div className="flex justify-between">

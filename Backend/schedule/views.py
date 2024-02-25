@@ -1,4 +1,5 @@
 from django.shortcuts import render
+import base64
 
 # Create your views here.
 
@@ -41,6 +42,11 @@ class createEvent(APIView):
         if serializer.is_valid():
             try:
                 serializer.save()
+                event_obj=Event.objects.get(name=event_name)
+                booking_obj, created = Booking.objects.get_or_create(event=event_obj,venue= event_obj.venue, date=event_obj.date, time=event_obj.time,committee=event_obj.committee)
+                # booking_obj.is_approved_all=False
+                booking_obj.save()
+
                 principle = Faculty.objects.get(is_principle=True)
                 hod = Faculty.objects.get(is_hod=True)
                 mentor = Faculty.objects.get(is_mentor=True)
@@ -60,12 +66,19 @@ class createEvent(APIView):
 
 
 # Sending approval email
-def email_send(email, fac_id, event_name, event_data):
+def encrypt_name(name):
+    encoded_bytes = base64.b64encode(name.encode('utf-8'))
+    encoded_name = encoded_bytes.decode('utf-8')
+    return encoded_name
+
+def email_send(email, name, event_name, event_data):
     subject = 'click the link to approve the event'
-    message = f'{event_data}\nClick on the link to approve this event http://127.0.0.1:8000/events/approval/{event_name}/{fac_id}/'
+    # message = f'{event_data}\nClick on the link to approve this event http://127.0.0.1:8000/events/approval/{event_name}/{fac_id}/'
+    encoded_name = encrypt_name(name)
+    message = f'{event_data}\nClick on the link to approve this event http://localhost:3000/form/{encoded_name}'
     email_from = settings.EMAIL_HOST_USER
     recipient_list = [email]
-    send_mail(subject, message, email_from, recipient_list)
+    send_mail(subject, message, email_from,recipient_list)
 
 
 # Verifying the email
@@ -126,22 +139,30 @@ class DisplayEventStudentRejected(viewsets.ModelViewSet):
     queryset = Event.objects.filter(is_rejected=True)
     serializer_class = EventSerializerAll
 
+from django.db.models import Q
+
 class DisplayEventStudentPrevious(viewsets.ModelViewSet):
-    queryset = Event.objects.filter(is_approved=False)
+    queryset = Event.objects.filter(Q(is_approved=True) | Q(is_rejected=True))
     serializer_class = EventSerializerAll
 
+
+from rest_framework.response import Response
+from rest_framework import status
 
 class DisplayEventStudentPending(viewsets.ViewSet):
     serializer_class = EventSerializerAll
 
     def list(self, request):
         fac_id = request.data.get('fac_id')
-        event_id = request.data.get('event_id')
+        # event_id = request.data.get('event_id')
 
         try:
             faculty_obj = Faculty.objects.get(fac_id=fac_id)
-            event_obj = Event.objects.get(id=event_id)
-            booking_obj = Booking.objects.get(event=event_obj)
+            # event_obj = Event.objects.get(id=event_id)
+            # venue_obj = event_obj.venue
+            # booking_obj, created = Booking.objects.get_or_create(event=event_obj,venue= venue_obj, date=event_obj.date, time=event_obj.time,committee=event_obj.committee)
+            # if created:
+            #     booking_obj.save()
 
             event_list = []
 
@@ -158,7 +179,9 @@ class DisplayEventStudentPending(viewsets.ViewSet):
                 booking_queryset = Booking.objects.filter(is_approved_dean=False)
                 event_list = [booking.event for booking in booking_queryset]
 
-            return Response({'event_list': event_list})
+            # Serialize the events
+            serializer = self.serializer_class(event_list, many=True)
+            return Response({'event_list': serializer.data})
         except (Faculty.DoesNotExist, Event.DoesNotExist, Booking.DoesNotExist) as e:
             return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
 
@@ -229,3 +252,20 @@ class Registration(APIView):
             return JsonResponse({'error': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class VenueAvailable(APIView):
+    def post(self, request):
+        date = request.data.get('date')
+
+        available_venues = Venue.objects.filter(is_available=True)
+        serialized_venues = VenueSerializer(available_venues, many=True).data
+
+        unavailable_venues = Venue.objects.filter(is_available=False)
+        serialized_unavailable_venues = VenueSerializer(unavailable_venues,many=True).data
+
+        # class DisplayVenue(viewsets.ModelViewSet):
+        # queryset = Venue.objects.all()
+        # serializer_class = VenueSerializer
+
+        return JsonResponse({"available_venues": serialized_venues,"unavailable_venues":serialized_unavailable_venues})
