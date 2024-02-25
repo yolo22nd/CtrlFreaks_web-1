@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
+from base.models import Student,Faculty, Committee
 from base.models import Student, Faculty, Committee
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -22,13 +23,34 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # Add custom claims
         if hasattr(user, 'student'):
+            student = Student.objects.get(user=user)
             token['is_student'] = True
+            token['name'] = student.name
+            token['email'] = student.email
+            token['department'] = student.department
+            token['ac_year'] = student.ac_year
+            token['rollno'] = student.rollno
         if hasattr(user, 'faculty'):
+            faculty = Faculty.objects.get(user=user)
             token['is_faculty'] = True
+            token['name'] = faculty.name
+            token['email'] = faculty.email
+            token['department'] = faculty.department
+            token['fac_id'] = faculty.fac_id
+            token['is_principle'] = faculty.is_principle
+            token['is_hod'] = faculty.is_hod
+            token['is_mentor'] = faculty.is_mentor
+            token['is_dean'] = faculty.is_dean
         if hasattr(user, 'committee'):
+            committee = Committee.objects.get(user=user)
             token['is_committee'] = True
+            token['name'] = committee.name
+            token['email'] = committee.email
+            token['department'] = committee.department
+            token['desc'] = committee.desc
 
         return token
+
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
